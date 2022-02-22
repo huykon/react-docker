@@ -1,6 +1,7 @@
 # Clone from repo
 
 [React Docker Ytb](https://github.com/nhtua/react-docker)
+[Youtube link to learn](https://www.youtube.com/watch?v=KrV3BaP_EsE)
 
 # Getting Started with Create React App
 
