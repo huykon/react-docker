@@ -2,25 +2,43 @@
 # See: https://circleci.com/docs/2.0/configuration-reference
 version: 2.1
 
-# Define a job to be invoked later in a workflow.
-# See: https://circleci.com/docs/2.0/configuration-reference/#jobs
+orbs:
+    node: circleci/node@5.0.0
+    docker: circleci/docker@2.0.2
+
 jobs:
-  say-hello:
-    # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
-    # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
-    docker:
-      - image: cimg/base:stable
-    # Add steps to the job
-    # See: https://circleci.com/docs/2.0/configuration-reference/#steps
-    steps:
-      - checkout
-      - run:
-          name: "Say hello"
-          command: "echo Hello, World!"
+    build-and-push:
+        environment:
+            DOCKER_IMAGE: huykon/react-docker
+            DOCKER_TAG: latest
+        executor: docker/docker
+        steps:
+            - setup_remote_docker
+            - checkout
+            - docker/check:
+                  docker-username: DOCKER_USER
+                  docker-password: DOCKER_PASSWORD
+            - docker/build:
+                  image: $DOCKER_IMAGE
+                  tag: $DOCKER_TAG
+            - docker/push:
+                  digest-path: /tmp/digest.txt
+                  image: $DOCKER_IMAGE
+                  tag: $DOCKER_TAG
+            - run:
+                  command: |
+                      echo "Digest is: $(</tmp/digest.txt)"
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
-  say-hello-workflow:
-    jobs:
-      - say-hello
+    build-deploy-pipeline:
+        jobs:
+            - node/test
+            - build-and-push:
+                  requires:
+                      - node/test
+                  filters:
+                      branches:
+                          only:
+                              - master
